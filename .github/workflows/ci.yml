@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  js:
+    name: Typecheck, lint, and test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Test
+        run: npm test -- --runInBand
+
+  ios-pods:
+    name: iOS dependency sanity check
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install JS dependencies
+        run: npm install
+      - name: Install CocoaPods when iOS project exists
+        run: |
+          if [ -f ios/Podfile ]; then
+            bundle install || true
+            cd ios
+            pod install
+          else
+            echo "ios/Podfile is not present yet; skipping pod install."
+          fi
