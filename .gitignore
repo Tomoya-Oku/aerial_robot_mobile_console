@@ -1,8 +1,13 @@
 node_modules/
 ios/Pods/
+ios/build/
+ios/DRACON.xcworkspace/
+ios/.xcode.env.local
+**/xcuserdata/
 android/.gradle/
 android/app/build/
-ios/build/
 coverage/
 .DS_Store
 *.log
+.bundle/
+vendor/bundle/
