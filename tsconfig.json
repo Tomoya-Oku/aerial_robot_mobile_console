@@ -1,0 +1,15 @@
+{
+  "extends": "@react-native/typescript-config/tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@app/*": ["src/app/*"],
+      "@components/*": ["src/components/*"],
+      "@design/*": ["src/design/*"],
+      "@features/*": ["src/features/*"],
+      "@ros/*": ["src/ros/*"]
+    },
+    "types": ["jest"]
+  },
+  "include": ["src", "__tests__", "index.js"]
+}
