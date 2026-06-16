@@ -182,3 +182,36 @@ src/
 - `keyboard_command.py` と同じ topic/message が publish されることを単体テストまたは mock rosbridge で確認する。
 - 実機接続前に危険操作の accidental tap 対策を確認する。
 - 実機・実ロボットで試す前に simulation または安全な mock topic で操作確認する。
+
+## 20260616修正点
+- ✅ 画面が全体サイズギリギリなので，ノッチ部分を考えて調整
+- ✅ タブアイコンをそれぞれ設定する．ROSはROSのロゴ，Settingsは歯車アイコンなど．
+- 入力可能部分は入力履歴を保存し，次回以降入力しやすくする．
+- 初回起動時にBridge URLを尋ねてデフォルト値にする．キャンセルの場合はws://localhost:9090
+- Dashboardの左にリアルタイムで接続状況を表す信号（赤: 接続できていない，緑: 接続済み）を表示
+- Connectボタンを押して接続成功したときにポップアップで「〜に接続成功した」旨を表示
+- Joystickタブ
+  - スクロールできないように．１画面に要素を集約する
+  - Bridge, namespaceを削除
+  - 上下左右の操作は右手親指で操作しやすいように，右側にコントロールを置く
+  - yaw+, yaw-, up, downを左側に置く
+  - arm, takeoff, land, f.land, haltは真ん中に置く
+  - ジョイスティックはボタン長押しでも効くようにする
+  - ジョイスティックの種類としてSettingsタブでボール式（スマホ版ドラクエなど）やVirtual Stickと切り替えられるようにする．
+  - Virtual Stickを実装
+  - Gyro Controlは別タブに移行する
+- Gyro Controlタブ
+  - 傾き加減が分かりやすいような表示（ビジュアル）をする
+- Settingsタブ
+  - Bridge URLに対し，アプリを閉じても前回内容を保存する．また，接続履歴を保存し，選択できるようにする．
+  - robot namespace, pose topicについても前回内容を保存する．また，接続履歴を保存し，選択できるようにする．
+  - ジョイスティックの種類を切り替えられるようにする．これも前回内容を保存する．
+  - 自分の署名を追加（Tomoya Oku）
+  - GithubリポジトリURLを追加: https://github.com/Tomoya-Oku/aerial_robot_mobile_console
+- Consoleタブ
+  - ターミナルのようなUIに変更
+  - コマンド送信履歴を保存
+  - Plotタブの左に配置
+- RosBagタブ
+  - ROSBAGのレコード開始ボタン
+  - ROSBAGの記録トピック選択
