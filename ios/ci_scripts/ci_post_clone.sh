@@ -15,6 +15,13 @@ export HOMEBREW_NO_AUTO_UPDATE=1
 brew install node@20
 brew link --overwrite --force node@20
 
+# アーカイブ時の build phase ("Bundle React Native code and images") は
+# with-environment.sh 経由で .xcode.env を読むが、そのシェルの PATH には
+# Homebrew の /opt/homebrew/bin が含まれず `command -v node` が空になり exit 65 で落ちる。
+# node の絶対パスを .xcode.env.local (gitignore 済み) に書き出して固定する。
+NODE_BINARY_PATH="$(command -v node)"
+echo "export NODE_BINARY=${NODE_BINARY_PATH}" > "$CI_PRIMARY_REPOSITORY_PATH/ios/.xcode.env.local"
+
 # Ruby (bundler / CocoaPods 用)
 # Xcode Cloud のシステム Ruby は /Library/Ruby/Gems が書き込み不可で
 # `gem install` が Gem::FilePermissionError になる。Homebrew の Ruby を使うと
