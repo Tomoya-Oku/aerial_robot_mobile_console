@@ -1,33 +1,82 @@
 import React from 'react';
-import {StyleSheet, Text, TextInput} from 'react-native';
+import {Linking, StyleSheet, Text} from 'react-native';
 import {ActionButton} from '@components/ActionButton';
 import {Card} from '@components/Card';
+import {HistoryInput} from '@components/HistoryInput';
 import {Screen} from '@components/Screen';
+import {SegmentedControl} from '@components/SegmentedControl';
 import {colors} from '@design/colors';
-import {radius, spacing} from '@design/spacing';
+import {spacing} from '@design/spacing';
 import {typography} from '@design/typography';
+import {JOYSTICK_KINDS} from '@lib/joystick';
 import {useRos} from '@ros/RosContext';
 
+const REPO_URL = 'https://github.com/Tomoya-Oku/aerial_robot_mobile_console';
+
 export function SettingsScreen() {
-  const {bridgeUrl, robotNs, poseTopic, setBridgeUrl, setRobotNs, setPoseTopic, connect, state} = useRos();
+  const {
+    bridgeUrl,
+    robotNs,
+    poseTopic,
+    joystickKind,
+    bridgeUrlHistory,
+    robotNsHistory,
+    poseTopicHistory,
+    setBridgeUrl,
+    setRobotNs,
+    setPoseTopic,
+    setJoystickKind,
+    connect,
+    state,
+  } = useRos();
 
   return (
     <Screen>
       <Text style={styles.title}>Settings</Text>
       <Card title="ROS Bridge">
-        <Text style={styles.label}>Bridge URL</Text>
-        <TextInput value={bridgeUrl} onChangeText={setBridgeUrl} autoCapitalize="none" style={styles.input} />
-        <Text style={styles.label}>Robot namespace</Text>
-        <TextInput value={robotNs} onChangeText={setRobotNs} autoCapitalize="none" style={styles.input} />
-        <Text style={styles.label}>Pose topic</Text>
-        <TextInput value={poseTopic} onChangeText={setPoseTopic} autoCapitalize="none" style={styles.input} />
+        <HistoryInput
+          label="Bridge URL"
+          value={bridgeUrl}
+          onChangeText={setBridgeUrl}
+          history={bridgeUrlHistory}
+          placeholder="ws://localhost:9090"
+        />
+        <HistoryInput
+          label="Robot namespace"
+          value={robotNs}
+          onChangeText={setRobotNs}
+          history={robotNsHistory}
+          placeholder="/dragon"
+        />
+        <HistoryInput
+          label="Pose topic"
+          value={poseTopic}
+          onChangeText={setPoseTopic}
+          history={poseTopicHistory}
+          placeholder="/dragon/ground_truth"
+        />
         <ActionButton label={state === 'connected' ? 'Reconnect' : 'Connect'} onPress={connect} />
+      </Card>
+      <Card title="Joystick" subtitle="操作スタイルを選択(保存されます)">
+        <SegmentedControl
+          options={JOYSTICK_KINDS.map(kind => ({value: kind.value, label: kind.label}))}
+          value={joystickKind}
+          onChange={setJoystickKind}
+        />
+        <Text style={styles.hint}>
+          {JOYSTICK_KINDS.find(kind => kind.value === joystickKind)?.hint}
+        </Text>
       </Card>
       <Card title="Safety defaults">
         <Text style={styles.body}>
           Force landing and halt require confirmation. Continuous joystick output must clamp velocity,
           apply a dead zone, and stop publishing when the bridge disconnects.
         </Text>
+      </Card>
+      <Card title="About">
+        <Text style={styles.body}>Author: Tomoya Oku</Text>
+        <ActionButton label="GitHub Repository" tone="secondary" onPress={() => Linking.openURL(REPO_URL)} />
+        <Text style={styles.link}>{REPO_URL}</Text>
       </Card>
     </Screen>
   );
@@ -39,23 +88,18 @@ const styles = StyleSheet.create({
     fontSize: typography.title,
     fontWeight: '800',
   },
-  label: {
+  hint: {
     color: colors.muted,
     fontSize: typography.small,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-  },
-  input: {
-    minHeight: 44,
-    borderColor: colors.line,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    color: colors.text,
-    fontFamily: typography.mono,
-    paddingHorizontal: spacing.md,
   },
   body: {
     color: colors.text,
     lineHeight: 20,
+  },
+  link: {
+    color: colors.accent,
+    fontFamily: typography.mono,
+    fontSize: typography.small,
+    marginTop: spacing.xs,
   },
 });
