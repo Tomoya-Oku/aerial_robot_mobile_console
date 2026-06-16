@@ -2,6 +2,7 @@ import React, {useEffect} from 'react';
 import {StyleSheet, Text, View} from 'react-native';
 import {ActionButton} from '@components/ActionButton';
 import {Card} from '@components/Card';
+import {ConnectionSignal} from '@components/ConnectionSignal';
 import {Screen} from '@components/Screen';
 import {StatusPill} from '@components/StatusPill';
 import {colors} from '@design/colors';
@@ -24,7 +25,10 @@ export function DashboardScreen() {
 
   return (
     <Screen>
-      <Text style={styles.title}>DRACON</Text>
+      <View style={styles.header}>
+        <ConnectionSignal state={state} />
+        <Text style={styles.title}>DRACON</Text>
+      </View>
       <View style={styles.pills}>
         <StatusPill
           label="ROS Bridge"
@@ -54,6 +58,11 @@ export function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
   title: {
     color: colors.ink,
     fontSize: typography.title,

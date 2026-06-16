@@ -4,12 +4,14 @@ import {StatusBar} from 'react-native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {RosProvider} from '@ros/RosContext';
 import {useFirstLaunchBridgePrompt} from '@features/settings/useBridgePrompt';
+import {useConnectToast} from '@features/dashboard/useConnectToast';
 import {RootTabs} from './navigation/RootTabs';
 import {colors} from '@design/colors';
 
-// Runs first-launch side effects that need RosContext, then renders the app.
+// Runs app-wide side effects that need RosContext, then renders the app.
 function AppGate({children}: PropsWithChildren) {
   useFirstLaunchBridgePrompt();
+  useConnectToast();
   return <>{children}</>;
 }
 
