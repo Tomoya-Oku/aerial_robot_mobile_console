@@ -10,10 +10,14 @@ type Props = PropsWithChildren<{
 
 export function Screen({children, scroll = true}: Props) {
   const insets = useSafeAreaInsets();
+  // Respect notches on every edge, including left/right for landscape orientation.
+  const safeArea = {
+    paddingTop: insets.top + spacing.md,
+    paddingLeft: insets.left + spacing.lg,
+    paddingRight: insets.right + spacing.lg,
+  };
   const content = (
-    <View style={[styles.content, {paddingTop: insets.top + spacing.md}]}>
-      {children}
-    </View>
+    <View style={[styles.content, safeArea]}>{children}</View>
   );
 
   if (!scroll) {
@@ -38,7 +42,6 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     gap: spacing.md,
-    paddingHorizontal: spacing.lg,
     paddingBottom: spacing.xl,
   },
 });

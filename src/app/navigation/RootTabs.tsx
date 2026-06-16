@@ -1,7 +1,6 @@
 import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {Text} from 'react-native';
 import {DashboardScreen} from '@features/dashboard/DashboardScreen';
 import {JoystickScreen} from '@features/joystick/JoystickScreen';
 import {RosGraphScreen} from '@features/rosGraph/RosGraphScreen';
@@ -9,6 +8,7 @@ import {ConsoleScreen} from '@features/console/ConsoleScreen';
 import {PlotScreen} from '@features/plot/PlotScreen';
 import {SettingsScreen} from '@features/settings/SettingsScreen';
 import {colors} from '@design/colors';
+import {TabIcon, TabIconName} from '@components/TabIcon';
 
 export type RootTabParamList = {
   Dashboard: undefined;
@@ -21,13 +21,13 @@ export type RootTabParamList = {
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
-const icons: Record<keyof RootTabParamList, string> = {
-  Dashboard: 'D',
-  Joystick: 'J',
-  ROS: 'R',
-  Plot: 'P',
-  Console: 'C',
-  Settings: 'S',
+const icons: Record<keyof RootTabParamList, TabIconName> = {
+  Dashboard: 'dashboard',
+  Joystick: 'joystick',
+  ROS: 'ros',
+  Plot: 'plot',
+  Console: 'console',
+  Settings: 'settings',
 };
 
 export function RootTabs() {
@@ -42,8 +42,8 @@ export function RootTabs() {
             borderTopColor: colors.line,
             backgroundColor: colors.surface,
           },
-          tabBarIcon: ({color}) => (
-            <Text style={{color, fontWeight: '800'}}>{icons[route.name]}</Text>
+          tabBarIcon: ({color, size}) => (
+            <TabIcon name={icons[route.name]} color={color} size={size} />
           ),
         })}>
         <Tab.Screen name="Dashboard" component={DashboardScreen} />
