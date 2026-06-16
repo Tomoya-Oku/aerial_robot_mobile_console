@@ -209,9 +209,9 @@ src/
   - ✅ 自分の署名を追加（Tomoya Oku）
   - ✅ GithubリポジトリURLを追加: https://github.com/Tomoya-Oku/aerial_robot_mobile_console
 - Consoleタブ
-  - ターミナルのようなUIに変更
-  - コマンド送信履歴を保存
-  - Plotタブの左に配置
+  - ✅ ターミナルのようなUIに変更
+  - ✅ コマンド送信履歴を保存
+  - ✅ Plotタブの左に配置
 - RosBagタブ
   - ROSBAGのレコード開始ボタン
   - ROSBAGの記録トピック選択

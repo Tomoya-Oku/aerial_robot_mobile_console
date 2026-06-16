@@ -1,11 +1,10 @@
 import React, {useState} from 'react';
-import {FlatList, StyleSheet, Text, TextInput, View} from 'react-native';
-import {ActionButton} from '@components/ActionButton';
-import {Card} from '@components/Card';
+import {FlatList, Pressable, ScrollView, StyleSheet, Text, TextInput, View} from 'react-native';
 import {Screen} from '@components/Screen';
-import {colors} from '@design/colors';
 import {radius, spacing} from '@design/spacing';
 import {typography} from '@design/typography';
+import {STORAGE_KEYS, pushHistory} from '@lib/storage';
+import {usePersistentState} from '@lib/usePersistentState';
 import {useRos} from '@ros/RosContext';
 
 type LogLine = {
@@ -14,10 +13,23 @@ type LogLine = {
   tone: 'command' | 'output' | 'error';
 };
 
+// Terminal-style palette, independent from the light app theme.
+const term = {
+  bg: '#0c1021',
+  surface: '#11162e',
+  prompt: '#56d364',
+  command: '#7ee787',
+  output: '#c9d1d9',
+  error: '#ff7b72',
+  muted: '#768390',
+  line: '#21262d',
+};
+
 export function ConsoleScreen() {
   const {client, state, refreshGraph} = useRos();
   const [command, setCommand] = useState('');
   const [lines, setLines] = useState<LogLine[]>([]);
+  const [history, setHistory] = usePersistentState<string[]>(STORAGE_KEYS.consoleHistory, []);
   const connected = state === 'connected';
 
   const append = (text: string, tone: LogLine['tone']) => {
@@ -30,10 +42,15 @@ export function ConsoleScreen() {
       return;
     }
     setCommand('');
-    append(`> ${raw}`, 'command');
+    setHistory(pushHistory(history, raw, 30));
+    append(`$ ${raw}`, 'command');
     try {
       if (raw === 'help') {
-        append('commands: help, graph, nodes, topics, services, call <service> <type> <json>, pub <topic> <type> <json>', 'output');
+        append('commands: help, clear, graph, nodes, topics, services, call <service> <type> <json>, pub <topic> <type> <json>', 'output');
+        return;
+      }
+      if (raw === 'clear') {
+        setLines([]);
         return;
       }
       if (raw === 'graph') {
@@ -71,69 +88,127 @@ export function ConsoleScreen() {
   return (
     <Screen scroll={false}>
       <Text style={styles.title}>Console</Text>
-      <Card subtitle="ROS command terminal">
+      <View style={styles.terminal}>
+        <FlatList
+          inverted
+          style={styles.log}
+          data={lines}
+          keyExtractor={item => item.id}
+          ListEmptyComponent={<Text style={styles.hintLine}>type `help` and press Send</Text>}
+          renderItem={({item}) => <Text style={[styles.line, styles[item.tone]]}>{item.text}</Text>}
+        />
+        {history.length > 0 ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.historyRow}>
+            {history.map(item => (
+              <Pressable
+                key={item}
+                accessibilityRole="button"
+                accessibilityLabel={`コマンド履歴 ${item}`}
+                onPress={() => setCommand(item)}
+                style={styles.chip}>
+                <Text numberOfLines={1} style={styles.chipText}>
+                  {item}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        ) : null}
         <View style={styles.inputRow}>
+          <Text style={styles.dollar}>$</Text>
           <TextInput
             value={command}
             onChangeText={setCommand}
-            placeholder="help"
+            placeholder={connected ? 'help' : 'not connected'}
+            placeholderTextColor={term.muted}
             autoCapitalize="none"
             autoCorrect={false}
             style={styles.input}
+            returnKeyType="send"
             onSubmitEditing={run}
           />
-          <ActionButton label="Send" disabled={!connected} onPress={run} />
         </View>
-      </Card>
-      <Card title="Log">
-        <FlatList
-          inverted
-          data={lines}
-          keyExtractor={item => item.id}
-          renderItem={({item}) => (
-            <Text style={[styles.line, styles[item.tone]]}>{item.text}</Text>
-          )}
-        />
-      </Card>
+      </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   title: {
-    color: colors.ink,
+    color: '#1f2933',
     fontSize: typography.title,
     fontWeight: '800',
   },
+  terminal: {
+    flex: 1,
+    borderRadius: radius.md,
+    backgroundColor: term.bg,
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  log: {
+    flex: 1,
+  },
+  line: {
+    fontFamily: typography.mono,
+    fontSize: typography.small,
+    paddingVertical: 2,
+  },
+  hintLine: {
+    color: term.muted,
+    fontFamily: typography.mono,
+    fontSize: typography.small,
+    transform: [{scaleY: -1}],
+  },
+  command: {
+    color: term.command,
+  },
+  output: {
+    color: term.output,
+  },
+  error: {
+    color: term.error,
+  },
+  historyRow: {
+    gap: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  chip: {
+    maxWidth: 220,
+    borderColor: term.line,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    backgroundColor: term.surface,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  chipText: {
+    color: term.command,
+    fontFamily: typography.mono,
+    fontSize: typography.small,
+  },
   inputRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.sm,
+    borderTopColor: term.line,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: spacing.sm,
+  },
+  dollar: {
+    color: term.prompt,
+    fontFamily: typography.mono,
+    fontSize: typography.body,
+    fontWeight: '800',
   },
   input: {
     flex: 1,
     minHeight: 44,
-    borderColor: colors.line,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    color: colors.text,
+    color: term.output,
     fontFamily: typography.mono,
-    paddingHorizontal: spacing.md,
-  },
-  line: {
-    borderBottomColor: colors.line,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    color: colors.text,
-    fontFamily: typography.mono,
-    fontSize: typography.small,
-    paddingVertical: spacing.sm,
-  },
-  command: {
-    color: colors.accent,
-  },
-  output: {
-    color: colors.text,
-  },
-  error: {
-    color: colors.danger,
+    fontSize: typography.body,
+    padding: 0,
   },
 });
