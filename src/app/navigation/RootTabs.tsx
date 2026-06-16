@@ -7,6 +7,7 @@ import {GyroScreen} from '@features/gyro/GyroScreen';
 import {RosGraphScreen} from '@features/rosGraph/RosGraphScreen';
 import {ConsoleScreen} from '@features/console/ConsoleScreen';
 import {PlotScreen} from '@features/plot/PlotScreen';
+import {RosBagScreen} from '@features/rosbag/RosBagScreen';
 import {SettingsScreen} from '@features/settings/SettingsScreen';
 import {colors} from '@design/colors';
 import {TabIcon, TabIconName} from '@components/TabIcon';
@@ -16,8 +17,9 @@ export type RootTabParamList = {
   Joystick: undefined;
   Gyro: undefined;
   ROS: undefined;
-  Plot: undefined;
   Console: undefined;
+  Plot: undefined;
+  Rosbag: undefined;
   Settings: undefined;
 };
 
@@ -28,8 +30,9 @@ const icons: Record<keyof RootTabParamList, TabIconName> = {
   Joystick: 'joystick',
   Gyro: 'gyro',
   ROS: 'ros',
-  Plot: 'plot',
   Console: 'console',
+  Plot: 'plot',
+  Rosbag: 'rosbag',
   Settings: 'settings',
 };
 
@@ -56,6 +59,7 @@ export function RootTabs() {
         <Tab.Screen name="ROS" component={RosGraphScreen} />
         <Tab.Screen name="Console" component={ConsoleScreen} />
         <Tab.Screen name="Plot" component={PlotScreen} />
+        <Tab.Screen name="Rosbag" component={RosBagScreen} />
         <Tab.Screen name="Settings" component={SettingsScreen} />
       </Tab.Navigator>
     </NavigationContainer>
