@@ -3,6 +3,7 @@ import {NavigationContainer} from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {DashboardScreen} from '@features/dashboard/DashboardScreen';
 import {JoystickScreen} from '@features/joystick/JoystickScreen';
+import {GyroScreen} from '@features/gyro/GyroScreen';
 import {RosGraphScreen} from '@features/rosGraph/RosGraphScreen';
 import {ConsoleScreen} from '@features/console/ConsoleScreen';
 import {PlotScreen} from '@features/plot/PlotScreen';
@@ -13,6 +14,7 @@ import {TabIcon, TabIconName} from '@components/TabIcon';
 export type RootTabParamList = {
   Dashboard: undefined;
   Joystick: undefined;
+  Gyro: undefined;
   ROS: undefined;
   Plot: undefined;
   Console: undefined;
@@ -24,6 +26,7 @@ const Tab = createBottomTabNavigator<RootTabParamList>();
 const icons: Record<keyof RootTabParamList, TabIconName> = {
   Dashboard: 'dashboard',
   Joystick: 'joystick',
+  Gyro: 'gyro',
   ROS: 'ros',
   Plot: 'plot',
   Console: 'console',
@@ -42,15 +45,17 @@ export function RootTabs() {
             borderTopColor: colors.line,
             backgroundColor: colors.surface,
           },
+          // eslint-disable-next-line react/no-unstable-nested-components
           tabBarIcon: ({color, size}) => (
             <TabIcon name={icons[route.name]} color={color} size={size} />
           ),
         })}>
         <Tab.Screen name="Dashboard" component={DashboardScreen} />
         <Tab.Screen name="Joystick" component={JoystickScreen} />
+        <Tab.Screen name="Gyro" component={GyroScreen} />
         <Tab.Screen name="ROS" component={RosGraphScreen} />
-        <Tab.Screen name="Plot" component={PlotScreen} />
         <Tab.Screen name="Console" component={ConsoleScreen} />
+        <Tab.Screen name="Plot" component={PlotScreen} />
         <Tab.Screen name="Settings" component={SettingsScreen} />
       </Tab.Navigator>
     </NavigationContainer>

@@ -1,87 +1,84 @@
 import React, {useState} from 'react';
 import {StyleSheet, Text, View} from 'react-native';
-import {Card} from '@components/Card';
+import {ConnectionSignal} from '@components/ConnectionSignal';
 import {Screen} from '@components/Screen';
-import {StatusPill} from '@components/StatusPill';
 import {colors} from '@design/colors';
 import {spacing} from '@design/spacing';
 import {typography} from '@design/typography';
 import {useRos} from '@ros/RosContext';
-import {GyroControls} from './GyroControls';
-import {TeleopControls} from './TeleopControls';
+import {AttitudeColumn, CommandColumn} from './TeleopControls';
+import {MovementControl} from './MovementControl';
 
 export function JoystickScreen() {
-  const {state, robotNs} = useRos();
+  const {state, joystickKind} = useRos();
   const [status, setStatus] = useState('ready');
   const xyVel = 0.2;
   const zVel = 0.2;
   const yawVel = 0.2;
 
   return (
-    <Screen>
-      <Text style={styles.title}>Joystick</Text>
-      <View style={styles.pills}>
-        <StatusPill label="Bridge" value={state} tone={state === 'connected' ? 'ok' : 'warn'} />
-        <StatusPill label="Namespace" value={robotNs || '/'} />
-      </View>
-      <Card title="Flight Control" subtitle={`xy ${xyVel} m/s, z ${zVel} m/s, yaw ${yawVel} rad/s`}>
-        <TeleopControls xyVel={xyVel} zVel={zVel} yawVel={yawVel} onStatus={setStatus} />
+    <Screen scroll={false}>
+      <View style={styles.header}>
+        <ConnectionSignal state={state} showLabel={false} size={14} />
+        <Text style={styles.title}>Joystick</Text>
         <Text style={styles.status}>{status}</Text>
-      </Card>
-      <Card title="Virtual stick">
-        <View style={styles.stick}>
-          <View style={styles.crosshair} />
-          <View style={styles.knob} />
+      </View>
+      <View style={styles.columns}>
+        {/* Left: yaw and altitude */}
+        <View style={styles.side}>
+          <Text style={styles.colLabel}>Yaw / Alt</Text>
+          <AttitudeColumn zVel={zVel} yawVel={yawVel} onStatus={setStatus} />
         </View>
-        <Text style={styles.note}>
-          Continuous analog control is reserved for the next increment; discrete commands already
-          mirror keyboard_command.py topics and FlightNav fields.
-        </Text>
-      </Card>
-      <GyroControls />
+        {/* Center: flight commands */}
+        <View style={styles.side}>
+          <Text style={styles.colLabel}>Command</Text>
+          <CommandColumn onStatus={setStatus} />
+        </View>
+        {/* Right: translation (right thumb), style depends on joystick kind */}
+        <View style={styles.movement}>
+          <Text style={styles.colLabel}>Move ({xyVel} m/s)</Text>
+          <MovementControl kind={joystickKind} xyVel={xyVel} />
+        </View>
+      </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
   title: {
     color: colors.ink,
     fontSize: typography.title,
     fontWeight: '800',
   },
-  pills: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
   status: {
+    flex: 1,
     color: colors.muted,
     fontFamily: typography.mono,
+    fontSize: typography.small,
+    textAlign: 'right',
   },
-  stick: {
-    height: 220,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderColor: colors.line,
-    borderRadius: 110,
-    borderWidth: 1,
-    backgroundColor: colors.surfaceAlt,
+  columns: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: spacing.md,
   },
-  crosshair: {
-    position: 'absolute',
-    width: 1,
-    height: 180,
-    backgroundColor: colors.line,
+  side: {
+    flex: 1,
+    gap: spacing.sm,
   },
-  knob: {
-    width: 82,
-    height: 82,
-    borderRadius: 41,
-    borderWidth: 8,
-    borderColor: colors.accent,
-    backgroundColor: colors.surface,
+  movement: {
+    flex: 1.3,
+    gap: spacing.sm,
   },
-  note: {
+  colLabel: {
     color: colors.muted,
-    lineHeight: 20,
+    fontSize: typography.small,
+    fontWeight: '800',
+    textTransform: 'uppercase',
   },
 });

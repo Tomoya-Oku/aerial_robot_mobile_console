@@ -1,4 +1,4 @@
-import {mapGyroToFlightNav} from '@features/joystick/GyroControls';
+import {mapGyroToFlightNav} from '@features/gyro/mapGyro';
 import {FLIGHT_NAV} from '@features/joystick/useFlightNavPublisher';
 
 describe('gyro control mapping', () => {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useRef} from 'react';
 import {Pressable, StyleSheet, Text, ViewStyle} from 'react-native';
 import {colors} from '@design/colors';
 import {radius, spacing} from '@design/spacing';
@@ -13,6 +13,11 @@ type Props = {
   tone?: Tone;
   style?: ViewStyle;
   accessibilityLabel?: string;
+  // When true, onPress repeats while the button is held (for teleop hold-to-move).
+  repeatOnHold?: boolean;
+  repeatInterval?: number;
+  // Called once when a held button is released (e.g. to publish a stop command).
+  onRelease?: () => void;
 };
 
 export function ActionButton({
@@ -22,13 +27,44 @@ export function ActionButton({
   tone = 'primary',
   style,
   accessibilityLabel,
+  repeatOnHold = false,
+  repeatInterval = 150,
+  onRelease,
 }: Props) {
+  const timerRef = useRef<ReturnType<typeof setInterval>>();
+
+  const clear = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = undefined;
+    }
+  };
+
+  useEffect(() => clear, []);
+
+  const handlePressIn = () => {
+    if (disabled) {
+      return;
+    }
+    onPress();
+    timerRef.current = setInterval(onPress, repeatInterval);
+  };
+
+  const handlePressOut = () => {
+    clear();
+    onRelease?.();
+  };
+
+  const pressableProps = repeatOnHold
+    ? {onPressIn: handlePressIn, onPressOut: handlePressOut}
+    : {onPress};
+
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel || label}
       disabled={disabled}
-      onPress={onPress}
+      {...pressableProps}
       style={({pressed}) => [
         styles.button,
         styles[tone],
