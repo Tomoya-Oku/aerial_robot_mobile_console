@@ -8,16 +8,19 @@
 
 ## 機能
 
-アプリは 6 つのタブで構成されます。
+アプリは Dashboard / Joystick / Gyro / Live / ROS / Console / Plot / Rosbag / Settings のタブで構成されます。
 
 | タブ | 内容 |
 | --- | --- |
 | **Dashboard** | 接続状態・namespace・robot type・pose・flight state・topic/node 数を集約表示 |
 | **Joystick** | 仮想ジョイスティック・方向ボタン・gyro 操作・危険操作 (Arm/Takeoff/Land 等) |
+| **Gyro** | iPhone ジャイロ入力による速度指令 |
+| **Live** | 3D live view、flight state、機体搭載カメラ映像、battery、モデル誤差、スワイプ軌跡 flight |
 | **ROS** | node / topic / service 一覧、topic 詳細・最新メッセージ preview、JSON publish、service call |
 | **Plot** | ROS topic の数値系列を PlotJuggler 風にリアルタイム表示 (pause/resume/clear/window 幅) |
 | **Console** | コマンド送信・実行ログ・接続エラー・ROS 応答を時系列表示 |
-| **Settings** | rosbridge URL・robot namespace・pose topic・速度 step・接続先履歴・危険操作の確認設定 |
+| **Rosbag** | Web console 互換 rosbag record、解析 request、Google Drive upload request、camera sync request |
+| **Settings** | rosbridge URL・robot namespace・pose/camera/flight/battery/model error topic・接続先履歴 |
 
 ### Joystick / Teleop
 
@@ -49,6 +52,16 @@
 
 `react-native-sensors` の gyroscope から `FlightNav` 速度指令を生成します。roll → `target_vel_y`、pitch → `target_vel_x`、yaw → `target_omega_z`。dead zone / gain / max velocity / publish interval を設定可能で、enable toggle がオンの間だけ publish し、通信断・画面離脱・toggle off で購読を解除します。
 
+### Live telemetry / 3D view
+
+`<robot_ns>/flight_state` (`std_msgs/UInt8`)、`<robot_ns>/uav_power` (`geometry_msgs/Vector3Stamped`: x=voltage, y=percentage)、pose topic、`<robot_ns>/debug/pose/pid`、compressed camera image を購読して Dashboard / Live に表示します。Live のスワイプ軌跡 flight は HOVER (`flight_state == 5`) かつ arm 済みの場合だけ `<robot_ns>/uav/nav` に `FlightNav.POS_MODE` waypoints を送ります。
+
+camera topic、battery topic、model error topic、満充電時の推定飛行時間は Settings で変更できます。battery は spinal の `<robot_ns>/battery_voltage_status` (`std_msgs/Float32`) へ戻して電圧だけ表示することもできます。camera はまず `sensor_msgs/CompressedImage` の base64 frame を対象にしています。
+
+### Rosbag / analysis / upload
+
+Rosbag control は `aerial_robot_web` と同じ `/aerial_robot_web/rosbag/start` (`std_msgs/String` JSON)、`/stop` (`std_msgs/Empty`)、`/status` (`std_msgs/String` JSON) を使います。解析 request と Google Drive upload request は `/aerial_robot_web/rosbag/analyze`、`/aerial_robot_web/rosbag/upload_drive` へ JSON を publish します。camera sync は `/aerial_robot_web/camera_sync/{start,stop}` を前提にしたクライアント境界で、ROS 側に対応 node を追加した場合に動作します。
+
 ---
 
 ## アーキテクチャ
@@ -58,9 +71,11 @@ src/
   app/            App.tsx, navigation/RootTabs.tsx
   features/
     joystick/     JoystickScreen, TeleopControls, GyroControls, useFlightNavPublisher
+    live/         LiveViewScreen
     rosGraph/     RosGraphScreen, PublishBox
     plot/         PlotScreen, SeriesPlot
     console/      ConsoleScreen
+    rosbag/       RosBagScreen
     dashboard/    DashboardScreen
     settings/     SettingsScreen
   ros/            rosClient, RosContext, rosTypes, topics, messageTemplate
@@ -68,7 +83,7 @@ src/
   design/         colors, spacing, typography
 ```
 
-- publish / subscribe / service call は UI から直接呼ばず **`src/ros` のクライアント層に集約**しています。
+- publish / subscribe / service call は UI から直接呼ばず **`src/ros` のクライアント層と feature hook に集約**しています。
 - ROS graph 更新は rosapi (`/rosapi/nodes`, `/rosapi/topics`, `/rosapi/services`)、topic 詳細は (`/rosapi/topic_type`, `/rosapi/publishers`, `/rosapi/subscribers`)、message template は `/rosapi/message_details` を使用します。
 - namespace は空文字と `/name` の双方を正規化して保持します。
 

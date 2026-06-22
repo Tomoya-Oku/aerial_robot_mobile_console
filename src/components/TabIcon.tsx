@@ -9,6 +9,8 @@ export type TabIconName =
   | 'console'
   | 'settings'
   | 'gyro'
+  | 'live'
+  | 'model'
   | 'rosbag';
 
 type Props = {
@@ -83,6 +85,22 @@ export function TabIcon({name, color, size = 24}: Props) {
           <Circle cx={12} cy={12} r={9} {...common} />
           <Path d="M3 12 a9 5 0 0 0 18 0 a9 5 0 0 0 -18 0" {...common} />
           <Path d="M12 3 a5 9 0 0 0 0 18 a5 9 0 0 0 0 -18" {...common} />
+        </>
+      )}
+      {name === 'live' && (
+        <>
+          <Path d="M4 16 L12 6 L20 16" {...common} />
+          <Path d="M7 16 H17 L20 21 H4 Z" {...common} />
+          <Circle cx={12} cy={13} r={2.5} {...common} />
+          <Path d="M12 13 L16 10" {...common} />
+        </>
+      )}
+      {name === 'model' && (
+        // Isometric cube for the 3D model / robot view.
+        <>
+          <Path d="M12 3 L20 7.5 L12 12 L4 7.5 Z" {...common} />
+          <Path d="M4 7.5 V16.5 L12 21 V12" {...common} />
+          <Path d="M20 7.5 V16.5 L12 21" {...common} />
         </>
       )}
       {name === 'rosbag' && (

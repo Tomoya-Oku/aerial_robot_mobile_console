@@ -3,7 +3,12 @@ import {useRos} from '@ros/RosContext';
 import {nsJoin} from '@ros/topics';
 
 export const FLIGHT_NAV = {
+  NO_NAVIGATION: 0,
   VEL_MODE: 1,
+  POS_MODE: 2,
+  ACC_MODE: 3,
+  POS_VEL_MODE: 4,
+  GPS_WAYPOINT_MODE: 5,
   WORLD_FRAME: 0,
   COG: 1,
 } as const;

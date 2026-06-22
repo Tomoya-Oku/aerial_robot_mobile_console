@@ -9,16 +9,18 @@ import {radius, spacing} from '@design/spacing';
 import {typography} from '@design/typography';
 import {useRos} from '@ros/RosContext';
 
-// Compatible with aerial_robot_web's /aerial_robot_web/rosbag/{start,stop,status}.
-// The exact service types are not verifiable from this repo, so they are kept
-// here as adjustable assumptions. Errors surface in the status log below.
+// Compatible with aerial_robot_web's /aerial_robot_web/rosbag/{start,stop,status} topics.
 const ROSBAG = {
   start: '/aerial_robot_web/rosbag/start',
   stop: '/aerial_robot_web/rosbag/stop',
   status: '/aerial_robot_web/rosbag/status',
-  startType: 'aerial_robot_web/RosbagStart',
-  stopType: 'std_srvs/Trigger',
-  statusType: 'std_srvs/Trigger',
+  analyze: '/aerial_robot_web/rosbag/analyze',
+  uploadDrive: '/aerial_robot_web/rosbag/upload_drive',
+};
+
+const CAMERA_SYNC = {
+  start: '/aerial_robot_web/camera_sync/start',
+  stop: '/aerial_robot_web/camera_sync/stop',
 };
 
 export function RosBagScreen() {
@@ -27,6 +29,9 @@ export function RosBagScreen() {
   const [filter, setFilter] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [recording, setRecording] = useState(false);
+  const [syncCamera, setSyncCamera] = useState(false);
+  const [bagDir, setBagDir] = useState('');
+  const [lastBagPath, setLastBagPath] = useState('');
   const [status, setStatus] = useState('idle');
 
   useEffect(() => {
@@ -34,6 +39,23 @@ export function RosBagScreen() {
       refreshGraph().catch(() => undefined);
     }
   }, [connected, refreshGraph]);
+
+  useEffect(() => {
+    if (!client || !connected) {
+      return undefined;
+    }
+    return client.subscribe(ROSBAG.status, 'std_msgs/String', message => {
+      const raw = String(message?.data || '');
+      try {
+        const parsed = JSON.parse(raw);
+        setRecording(Boolean(parsed.recording));
+        setLastBagPath(parsed.bag_path || '');
+        setStatus(raw);
+      } catch {
+        setStatus(raw || 'status received');
+      }
+    }, 500);
+  }, [client, connected]);
 
   const topics = useMemo(() => {
     const lower = filter.trim().toLowerCase();
@@ -55,10 +77,19 @@ export function RosBagScreen() {
   const startRecording = async () => {
     const list = Array.from(selected);
     try {
-      // No selection means record all topics, matching `rosbag record -a`.
-      await client?.callService(ROSBAG.start, ROSBAG.startType, {
+      if (syncCamera) {
+        client?.publish(CAMERA_SYNC.start, 'std_msgs/String', {
+          data: JSON.stringify({bag_dir: bagDir.trim()}),
+        });
+      }
+      client?.publish(ROSBAG.start, 'std_msgs/String', {
+        data: JSON.stringify({
+          // No selection means record all topics, matching `rosbag record -a`.
         topics: list,
         all: list.length === 0,
+          bag_dir: bagDir.trim(),
+          sync_camera: syncCamera,
+        }),
       });
       setRecording(true);
       setStatus(`recording ${list.length === 0 ? 'all topics' : `${list.length} topics`}`);
@@ -69,7 +100,10 @@ export function RosBagScreen() {
 
   const stopRecording = async () => {
     try {
-      await client?.callService(ROSBAG.stop, ROSBAG.stopType);
+      client?.publish(ROSBAG.stop, 'std_msgs/Empty', {});
+      if (syncCamera) {
+        client?.publish(CAMERA_SYNC.stop, 'std_msgs/Empty', {});
+      }
       setRecording(false);
       setStatus('stopped');
     } catch (error) {
@@ -78,9 +112,26 @@ export function RosBagScreen() {
   };
 
   const checkStatus = async () => {
+    setStatus('waiting for latched rosbag status');
+  };
+
+  const analyzeBag = () => {
     try {
-      const result = await client?.callService(ROSBAG.status, ROSBAG.statusType);
-      setStatus(JSON.stringify(result));
+      client?.publish(ROSBAG.analyze, 'std_msgs/String', {
+        data: JSON.stringify({bag_path: lastBagPath, topics: Array.from(selected)}),
+      });
+      setStatus('analysis requested');
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : String(error));
+    }
+  };
+
+  const uploadDrive = () => {
+    try {
+      client?.publish(ROSBAG.uploadDrive, 'std_msgs/String', {
+        data: JSON.stringify({bag_path: lastBagPath}),
+      });
+      setStatus('Google Drive upload requested');
     } catch (error) {
       setStatus(error instanceof Error ? error.message : String(error));
     }
@@ -93,6 +144,14 @@ export function RosBagScreen() {
         <Text style={styles.title}>Rosbag</Text>
       </View>
       <Card title="Record" subtitle={recording ? '録画中' : '停止中'}>
+        <TextInput
+          value={bagDir}
+          onChangeText={setBagDir}
+          placeholder="Bag folder on robot PC (optional)"
+          placeholderTextColor={colors.muted}
+          autoCapitalize="none"
+          style={styles.filter}
+        />
         <View style={styles.row}>
           <ActionButton
             label={recording ? 'Recording...' : 'Record'}
@@ -110,9 +169,32 @@ export function RosBagScreen() {
           />
           <ActionButton label="Status" tone="secondary" disabled={!connected} onPress={checkStatus} />
         </View>
+        <View style={styles.row}>
+          <ActionButton
+            label={syncCamera ? 'Camera Sync On' : 'Camera Sync Off'}
+            tone={syncCamera ? 'primary' : 'secondary'}
+            disabled={recording}
+            onPress={() => setSyncCamera(value => !value)}
+            style={styles.flex}
+          />
+          <ActionButton
+            label="Analyze"
+            tone="secondary"
+            disabled={!connected || recording || !lastBagPath}
+            onPress={analyzeBag}
+            style={styles.flex}
+          />
+          <ActionButton
+            label="Drive"
+            tone="secondary"
+            disabled={!connected || recording || !lastBagPath}
+            onPress={uploadDrive}
+          />
+        </View>
         <Text style={styles.status}>{status}</Text>
+        {lastBagPath ? <Text style={styles.status}>last bag: {lastBagPath}</Text> : null}
         <Text style={styles.hint}>
-          選択なしで全トピック録画。{selected.size} 件選択中。
+          選択なしで全トピック録画。{selected.size} 件選択中。Camera sync は ROS 側の同期 recorder が必要です。
         </Text>
       </Card>
       <Card title={`記録トピック選択 (${topics.length})`}>

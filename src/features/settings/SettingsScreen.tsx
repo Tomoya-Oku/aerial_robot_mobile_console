@@ -1,5 +1,5 @@
 import React from 'react';
-import {Linking, StyleSheet, Text} from 'react-native';
+import {Linking, StyleSheet, Text, TextInput} from 'react-native';
 import {ActionButton} from '@components/ActionButton';
 import {Card} from '@components/Card';
 import {HistoryInput} from '@components/HistoryInput';
@@ -18,6 +18,11 @@ export function SettingsScreen() {
     bridgeUrl,
     robotNs,
     poseTopic,
+    flightStateTopic,
+    batteryTopic,
+    cameraTopic,
+    modelErrorTopic,
+    fullBatteryFlightMinutes,
     joystickKind,
     bridgeUrlHistory,
     robotNsHistory,
@@ -25,6 +30,11 @@ export function SettingsScreen() {
     setBridgeUrl,
     setRobotNs,
     setPoseTopic,
+    setFlightStateTopic,
+    setBatteryTopic,
+    setCameraTopic,
+    setModelErrorTopic,
+    setFullBatteryFlightMinutes,
     setJoystickKind,
     connect,
     state,
@@ -57,6 +67,18 @@ export function SettingsScreen() {
         />
         <ActionButton label={state === 'connected' ? 'Reconnect' : 'Connect'} onPress={connect} />
       </Card>
+      <Card title="Live telemetry" subtitle="ROS topic mapping">
+        <PlainInput label="Flight state" value={flightStateTopic} onChangeText={setFlightStateTopic} />
+        <PlainInput label="Battery" value={batteryTopic} onChangeText={setBatteryTopic} />
+        <PlainInput label="Camera compressed image" value={cameraTopic} onChangeText={setCameraTopic} />
+        <PlainInput label="Model error" value={modelErrorTopic} onChangeText={setModelErrorTopic} />
+        <PlainInput
+          label="Full battery flight minutes"
+          value={fullBatteryFlightMinutes}
+          onChangeText={setFullBatteryFlightMinutes}
+          keyboardType="decimal-pad"
+        />
+      </Card>
       <Card title="Joystick" subtitle="操作スタイルを選択(保存されます)">
         <SegmentedControl
           options={JOYSTICK_KINDS.map(kind => ({value: kind.value, label: kind.label}))}
@@ -82,6 +104,33 @@ export function SettingsScreen() {
   );
 }
 
+function PlainInput({
+  label,
+  value,
+  onChangeText,
+  keyboardType,
+}: {
+  label: string;
+  value: string;
+  onChangeText: (value: string) => void;
+  keyboardType?: 'default' | 'decimal-pad';
+}) {
+  return (
+    <>
+      <Text style={styles.inputLabel}>{label}</Text>
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        keyboardType={keyboardType}
+        autoCapitalize="none"
+        autoCorrect={false}
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+      />
+    </>
+  );
+}
+
 const styles = StyleSheet.create({
   title: {
     color: colors.ink,
@@ -95,6 +144,20 @@ const styles = StyleSheet.create({
   body: {
     color: colors.text,
     lineHeight: 20,
+  },
+  inputLabel: {
+    color: colors.muted,
+    fontSize: typography.small,
+    fontWeight: '700',
+  },
+  input: {
+    minHeight: 44,
+    borderColor: colors.line,
+    borderRadius: 6,
+    borderWidth: 1,
+    color: colors.text,
+    fontFamily: typography.mono,
+    paddingHorizontal: spacing.md,
   },
   link: {
     color: colors.accent,
