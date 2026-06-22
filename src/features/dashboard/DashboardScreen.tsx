@@ -9,9 +9,11 @@ import {colors} from '@design/colors';
 import {spacing} from '@design/spacing';
 import {typography} from '@design/typography';
 import {useRos} from '@ros/RosContext';
+import {useAerialTelemetry} from '@ros/useAerialTelemetry';
 
 export function DashboardScreen() {
   const {bridgeUrl, robotNs, poseTopic, state, error, graph, connect, disconnect, refreshGraph} = useRos();
+  const {flightState, battery, modelError} = useAerialTelemetry();
   const connected = state === 'connected';
 
   useEffect(() => {
@@ -36,9 +38,34 @@ export function DashboardScreen() {
           tone={connected ? 'ok' : state === 'error' ? 'bad' : 'warn'}
         />
         <StatusPill label="Robot" value={robotNs || '/'} />
+        <StatusPill
+          label="Flight"
+          value={flightState ? `${flightState.label} (${flightState.code})` : 'unknown'}
+          tone={flightState?.tone || 'warn'}
+        />
+        <StatusPill
+          label="Battery"
+          value={battery?.percentage == null ? '--' : `${battery.percentage.toFixed(0)}%`}
+          tone={(battery?.percentage ?? 100) < 25 ? 'bad' : 'ok'}
+        />
+        <StatusPill
+          label="Error"
+          value={modelError?.maxAbs == null ? '--' : modelError.maxAbs.toFixed(3)}
+          tone={(modelError?.maxAbs ?? 0) > 0.2 ? 'warn' : 'ok'}
+        />
         <StatusPill label="Nodes" value={String(graph.nodes.length)} />
         <StatusPill label="Topics" value={String(graph.topics.length)} />
       </View>
+      <Card title="Battery summary">
+        <View style={styles.metrics}>
+          <Metric label="Voltage" value={battery?.voltage == null ? '--' : `${battery.voltage.toFixed(2)} V`} />
+          <Metric label="Percentage" value={battery?.percentage == null ? '--' : `${battery.percentage.toFixed(0)}%`} />
+          <Metric
+            label="Remaining"
+            value={battery?.remainingMinutes == null ? '--' : `${battery.remainingMinutes.toFixed(1)} min`}
+          />
+        </View>
+      </Card>
       <Card title="Connection" subtitle={error || 'rosbridge websocket'}>
         <Text style={styles.mono}>{bridgeUrl}</Text>
         <Text style={styles.mono}>{poseTopic}</Text>
@@ -54,6 +81,15 @@ export function DashboardScreen() {
         </Text>
       </Card>
     </Screen>
+  );
+}
+
+function Metric({label, value}: {label: string; value: string}) {
+  return (
+    <View style={styles.metric}>
+      <Text style={styles.metricLabel}>{label}</Text>
+      <Text style={styles.metricValue}>{value}</Text>
+    </View>
   );
 }
 
@@ -87,5 +123,25 @@ const styles = StyleSheet.create({
   body: {
     color: colors.text,
     lineHeight: 20,
+  },
+  metrics: {
+    gap: spacing.sm,
+  },
+  metric: {
+    minHeight: 36,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderBottomColor: colors.line,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  metricLabel: {
+    color: colors.muted,
+    fontSize: typography.small,
+  },
+  metricValue: {
+    color: colors.ink,
+    fontFamily: typography.mono,
+    fontWeight: '700',
   },
 });

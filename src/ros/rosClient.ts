@@ -81,7 +81,11 @@ export class RosBridgeClient {
     });
     return () => {
       this.subscriptions.delete(id);
-      this.send({op: 'unsubscribe', id, topic});
+      try {
+        this.send({op: 'unsubscribe', id, topic});
+      } catch {
+        // The socket may already be closed during React cleanup.
+      }
     };
   }
 

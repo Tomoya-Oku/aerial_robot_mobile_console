@@ -4,6 +4,8 @@ import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {DashboardScreen} from '@features/dashboard/DashboardScreen';
 import {JoystickScreen} from '@features/joystick/JoystickScreen';
 import {GyroScreen} from '@features/gyro/GyroScreen';
+import {LiveViewScreen} from '@features/live/LiveViewScreen';
+import {ModelScreen} from '@features/model/ModelScreen';
 import {RosGraphScreen} from '@features/rosGraph/RosGraphScreen';
 import {ConsoleScreen} from '@features/console/ConsoleScreen';
 import {PlotScreen} from '@features/plot/PlotScreen';
@@ -16,6 +18,8 @@ export type RootTabParamList = {
   Dashboard: undefined;
   Joystick: undefined;
   Gyro: undefined;
+  Live: undefined;
+  Model: undefined;
   ROS: undefined;
   Console: undefined;
   Plot: undefined;
@@ -29,6 +33,8 @@ const icons: Record<keyof RootTabParamList, TabIconName> = {
   Dashboard: 'dashboard',
   Joystick: 'joystick',
   Gyro: 'gyro',
+  Live: 'live',
+  Model: 'model',
   ROS: 'ros',
   Console: 'console',
   Plot: 'plot',
@@ -56,6 +62,8 @@ export function RootTabs() {
         <Tab.Screen name="Dashboard" component={DashboardScreen} />
         <Tab.Screen name="Joystick" component={JoystickScreen} />
         <Tab.Screen name="Gyro" component={GyroScreen} />
+        <Tab.Screen name="Live" component={LiveViewScreen} />
+        <Tab.Screen name="Model" component={ModelScreen} />
         <Tab.Screen name="ROS" component={RosGraphScreen} />
         <Tab.Screen name="Console" component={ConsoleScreen} />
         <Tab.Screen name="Plot" component={PlotScreen} />
